@@ -1,0 +1,76 @@
+{
+    "time_slots" : {
+        "h": {
+            "h1": [[7, 7], [16, 4]],
+            "h2": [[6, 1], [14, 2], [20, 2]],
+            "h3": [[0, 6], [22, 2]]
+        },
+        "t": {
+            "t1": [[6, 16]],
+            "t2": [[22, 2], [0, 6]]
+        },
+        "m": {"m1": [[11, 2], [1, 2]], "m2": [[3, 8]]},
+        "dow": {"d1": [[0, 5]], "d2": [[5, 2]]}
+    },
+    "time_slot_timer_translation":{
+        "h": "Ura",
+        "t": "Ura",
+        "m": "Mesec",
+        "dow": "DanVTednu"
+    },
+    "slot_defs":{
+        "tarif" : {
+            "VT": [{"hol": false, "dow": "d1", "t": "t1"}],
+            "MT": [
+                {"hol": true},
+                {"hol": false, "dow": "d2"},
+                {"hol": false, "dow": "d1", "t": "t2"}
+            ]
+        },
+
+        "limit": {
+            "casovniBlok1": [{"hol": false, "m": "m1", "dow": "d1", "h": "h1"}],
+            "casovniBlok2": [
+                {"m": "m1", "hol": true, "h": "h1"},
+                {"hol": false, "m": "m1", "dow": "d1", "h": "h2"},
+                {"hol": false, "m": "m1", "dow": "d2", "h": "h1"},
+                {"hol": false, "m": "m2", "dow": "d1", "h": "h1"}
+            ],
+            "casovniBlok3": [
+                {"m": "m1", "hol": true, "h": "h2"},
+                {"m": "m2", "hol": true, "h": "h1"},
+                {"hol": false, "m": "m1", "dow": "d1", "h": "h3"},
+                {"hol": false, "m": "m1", "dow": "d2", "h": "h2"},
+                {"hol": false, "m": "m2", "dow": "d1", "h": "h2"},
+                {"hol": false, "m": "m2", "dow": "d2", "h": "h1"}
+            ],
+            "casovniBlok4": [
+                {"m": "m1", "hol": true, "h": "h3"},
+                {"m": "m2", "hol": true, "h": "h2"},
+                {"hol": false, "m": "m1", "dow": "d2", "h": "h3"},
+                {"hol": false, "m": "m2", "dow": "d1", "h": "h3"},
+                {"hol": false, "m": "m2", "dow": "d2", "h": "h2"}
+            ],
+            "casovniBlok5": [
+                {"m": "m2", "hol": true, "h": "h3"},
+                {"hol": false, "m": "m2", "dow": "d2", "h": "h3"}
+            ]
+        }
+    },
+
+    "holidays": [
+        {"Mesec": 1, "Dan": 1},
+        {"Mesec": 1, "Dan": 2},
+        {"Mesec": 2, "Dan": 8},
+        {"Mesec": 4, "Dan": 27},
+        {"Mesec": 5, "Dan": 1},
+        {"Mesec": 5, "Dan": 2},
+        {"Mesec": 6, "Dan": 25},
+        {"Mesec": 8, "Dan": 15},
+        {"Mesec": 10, "Dan": 31},
+        {"Mesec": 11, "Dan": 1},
+        {"Mesec": 12, "Dan": 25},
+        {"Mesec": 12, "Dan": 26},
+        {"Leto": 2024, "Mesec": 4, "Dan": 1}
+    ]
+}

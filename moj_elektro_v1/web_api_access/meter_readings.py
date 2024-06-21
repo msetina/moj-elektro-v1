@@ -1,0 +1,157 @@
+from datetime import date, datetime, timedelta
+from logging import Logger
+
+from moj_elektro_v1.blocks.time_blocks import TimeBlocks
+from moj_elektro_v1.http_access.http_JSON_conn import (
+    ClientSession,
+    HTTPJSONConnection,
+)
+from moj_elektro_v1.web_api_access.merilna_tocka import MerilnaTocka
+from moj_elektro_v1.web_api_access.meter_type import MeterType
+
+dt_fmt = "%Y-%m-%d"
+ts_fmt = "%Y-%m-%dT%H:%M:%S%z"
+
+
+def _get_block_dogovorjena_moc(row: dict, dogovorjene_moci: list):
+    ret = None
+    if dogovorjene_moci is not None and "Blok" in row:
+        for dmc in dogovorjene_moci:
+            d_f_s = datetime.strptime(dmc["datumOd"], ts_fmt)
+            d_t_s = datetime.strptime(dmc["datumDo"], ts_fmt)
+            t_s = row["dt"]
+            block = row["Blok"]
+            if d_f_s <= t_s and t_s < d_t_s:
+                if block in dmc:
+                    ret = dmc[block]
+                    break
+    return ret
+
+
+class MeterReadings(HTTPJSONConnection):
+    def __init__(self, api_key: str, logger: Logger | None = None) -> None:
+        super().__init__(
+            {
+                "X-API-TOKEN": f"{api_key}",
+                "accept": "application/json",
+            },
+            "https://api.informatika.si/mojelektro/v1/meter-readings",
+            logger,
+        )
+        self.__time_blocks = TimeBlocks.load_time_block_definitions()
+
+    @classmethod
+    async def get_readings(
+        cls,
+        session: ClientSession,
+        api_key: str,
+        EIMM: str,
+        frm: date,
+        to: date,
+        oznaka_list: list,
+        logger: Logger | None = None,
+    ):
+        parameters = await MerilnaTocka.get_parameters_by_vrsta(
+            session, api_key, EIMM, logger
+        )
+
+        lookup_reading_list = await MeterType.get_reading_type_lookup(
+            session, api_key, oznaka_list, parameters, logger
+        )
+
+        reading_type_template = "ReadingType={0}"
+        option_list = []
+        if lookup_reading_list is not None and isinstance(
+            lookup_reading_list, dict
+        ):
+            for reading_type in lookup_reading_list:
+                option_list.append(reading_type_template.format(reading_type))
+        from_dt = frm.strftime(dt_fmt)
+        to_dt = to.strftime(dt_fmt)
+        data: dict[str, dict] = {}
+        if len(option_list) > 0:
+            params = {
+                "usagePoint": f"{EIMM}",
+                "startTime": from_dt,
+                "endTime": to_dt,
+                "option": option_list,
+            }
+            mr = cls(api_key, logger)
+            readings = await mr(session, params)
+            if readings is not None and isinstance(readings, dict):
+                for k in readings["intervalBlocks"]:
+                    for l in k["intervalReadings"]:
+                        lkp = lookup_reading_list.get(
+                            k["readingType"], ("Unknown", [], 0)
+                        )
+                        if l["timestamp"] not in data:
+                            data[l["timestamp"]] = {}
+                            data[l["timestamp"]].update({"Merilno mesto": EIMM})
+                            ts = datetime.strptime(l["timestamp"], ts_fmt)
+                            ts = ts - timedelta(minutes=15)
+                            data[l["timestamp"]].update(
+                                {
+                                    "dt": ts,
+                                    "Leto": ts.year,
+                                    "Mesec": ts.month,
+                                    "Dan": ts.day,
+                                    "DanVTednu": ts.weekday(),
+                                    "Ura": ts.hour,
+                                    "Minuta": ts.minute,
+                                    "Sekunda": ts.second,
+                                }
+                            )
+                            slots = await mr.lookup_slots(data[l["timestamp"]])
+                            if "tarif" in slots and lkp[2] != 2:
+                                slots["tarif"]["slot"] = "ET"
+
+                            if "limit" in slots and "slot" in slots["limit"]:
+                                data[l["timestamp"]].update(
+                                    {
+                                        "Blok": slots["limit"]["slot"],
+                                    }
+                                )
+                            if "tarif" in slots and "slot" in slots["tarif"]:
+                                data[l["timestamp"]].update(
+                                    {
+                                        "Tarifa": slots["tarif"]["slot"],
+                                    }
+                                )
+
+                        dmc = lkp[1]
+                        blk_pwr = _get_block_dogovorjena_moc(
+                            data[l["timestamp"]], dmc
+                        )
+                        if blk_pwr is not None:
+                            data[l["timestamp"]].update(
+                                {"Dogovorjena moč": float(blk_pwr)}
+                            )
+
+                        data[l["timestamp"]].update({lkp[0]: float(l["value"])})
+
+        return list(data.values())
+
+    async def lookup_slots(self, row: dict):
+        slots = self.__time_blocks.get_time_slots(row)
+        return slots
+
+    async def __call__(
+        self, session: ClientSession, params: dict | None = None
+    ) -> dict | list | None:
+        return await super().__call__(session, params)
+
+    async def _process_return(self, resp) -> dict | list | None:
+        data = None
+        if resp.status in [400, 401, 403]:
+            errors = await resp.json()
+            msg = None
+            for error in errors["errors"]:
+                if msg is None:
+                    msg = "Accessing meter_readings the error returned was:"
+                msg = msg + "{koda} - {opis}".format(**error)
+            if msg is not None:
+                raise Exception(msg)
+
+        else:
+            data = await super()._process_return(resp)
+        return data

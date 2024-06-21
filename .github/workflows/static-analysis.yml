@@ -1,0 +1,30 @@
+name: Static analysis
+
+on: ["push", "pull_request"]
+
+permissions:
+  actions: read
+  contents: read
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+      - run: pip install --upgrade pip isort black
+      - name: Check import order
+        run: isort --profile black --line-length 80 --check pkcs11_cryptography_keys*
+      - name: Run Black
+        run: black -S --line-length 80 --check pkcs11_cryptography_keys*
+  mypy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+      - run: pip install --upgrade pip mypy PyKCS11
+      - name: setup prerequisites (linux)
+        shell: bash
+        run: sudo apt install swig
+      - name: Run mypy
+        run: mypy pkcs11_cryptography_keys
+    
