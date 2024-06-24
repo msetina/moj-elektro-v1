@@ -1,6 +1,6 @@
 from logging import Logger, getLogger
 
-from aiohttp import ClientSession
+from aiohttp import ClientResponse, ClientSession
 
 
 class HTTPJSONConnection(object):
@@ -35,10 +35,13 @@ class HTTPJSONConnection(object):
                 data = await self._process_return(resp)
         return data
 
-    async def _process_return(self, resp):
+    async def _process_return(self, resp: ClientResponse):
         data = None
         if resp.status == 200:
-            data = await resp.json()
+            try:
+                data = await resp.json()
+            except Exception as e:
+                raise Exception("JSON was not in proper format: {0}".format(e))
         else:
             resp.raise_for_status()
         return data
