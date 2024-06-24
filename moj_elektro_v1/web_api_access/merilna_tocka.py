@@ -48,7 +48,7 @@ class MerilnaTocka(HTTPJSONConnection):
         api_key: str,
         EIMM: str,
         logger: Logger | None = None,
-    ) -> dict[str, tuple[list, int]]:
+    ) -> dict[str, tuple[list, int, int]]:
         params = {}
         mt_list = await cls.get_merilne_tocke(session, api_key, EIMM, logger)
         for mt in mt_list:

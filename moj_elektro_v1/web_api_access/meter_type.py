@@ -43,9 +43,9 @@ class MeterType(HTTPJSONConnection):
         session: ClientSession,
         api_key: str,
         oznaka_list: list,
-        mt_params: dict[str, tuple[list, int]],
+        mt_params: dict[str, tuple[list, int, int]],
         logger: Logger | None = None,
-    ) -> dict[str, tuple[str, list, int]]:
+    ) -> dict[str, tuple[str, list, int, int]]:
         rts = cls(api_key, logger)
         reading_types = await rts(session)
         lookup_reading_list = {}

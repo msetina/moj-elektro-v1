@@ -82,8 +82,10 @@ class MeterReadings(HTTPJSONConnection):
             if readings is not None and isinstance(readings, dict):
                 for k in readings["intervalBlocks"]:
                     for l in k["intervalReadings"]:
-                        lkp = lookup_reading_list.get(
-                            k["readingType"], ("Unknown", [], 0)
+                        lkp: tuple[str, list, int, int] = (
+                            lookup_reading_list.get(
+                                k["readingType"], ("Unknown", [], 0, 0)
+                            )
                         )
                         if l["timestamp"] not in data:
                             data[l["timestamp"]] = {}
