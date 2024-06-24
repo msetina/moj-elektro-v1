@@ -55,6 +55,7 @@ class MerilnaTocka(HTTPJSONConnection):
             params[mt["vrsta"]] = (
                 mt["dogovorjeneMoci"],
                 mt["steviloTarifMerjenja"],
+                mt["obracunskaMoc"],
             )
         return params
 

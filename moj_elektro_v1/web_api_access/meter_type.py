@@ -65,6 +65,7 @@ class MeterType(HTTPJSONConnection):
                                 reading_type["oznaka"],
                                 params[0],
                                 params[1],
+                                params[2],
                             )
         return lookup_reading_list
 

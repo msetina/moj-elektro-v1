@@ -129,6 +129,9 @@ class MeterReadings(HTTPJSONConnection):
                             )
 
                         data[l["timestamp"]].update({lkp[0]: float(l["value"])})
+                        data[l["timestamp"]].update(
+                            {"obracunskaMoc": float(lkp[3])}
+                        )
 
         return list(data.values())
 
