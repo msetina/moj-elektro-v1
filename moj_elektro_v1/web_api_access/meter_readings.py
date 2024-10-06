@@ -21,6 +21,13 @@ def _last_day_of_month(any_day):
     return next_month - timedelta(days=next_month.day)
 
 
+def _first_day_next_month(any_day):
+    next_month = any_day.replace(day=28) + timedelta(
+        days=4
+    )  # this will never fail
+    return next_month - timedelta(days=next_month.day - 1)
+
+
 def _get_param_list(begin, end, EIMM, option_list):
     result = []
     while True:
@@ -34,7 +41,7 @@ def _get_param_list(begin, end, EIMM, option_list):
             {
                 "usagePoint": f"{EIMM}",
                 "startTime": begin.strftime(dt_fmt),
-                "endTime": _last_day_of_month(begin).strftime(dt_fmt),
+                "endTime": _first_day_next_month(begin).strftime(dt_fmt),
                 "option": option_list,
             }
         )
@@ -85,7 +92,7 @@ class MeterReadings(HTTPJSONConnection):
         EIMM: str,
         frm: date,
         to: date,
-        oznaka_list: list,
+        oznaka_list: list[str],
         logger: Logger | None = None,
     ):
         parameters = await MerilnaTocka.get_parameters_by_vrsta(
