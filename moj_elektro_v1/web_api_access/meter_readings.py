@@ -35,7 +35,7 @@ def _get_param_list(begin, end, EIMM, option_list):
             next_month = begin.replace(year=begin.year + 1, month=1, day=1)
         else:
             next_month = begin.replace(month=begin.month + 1, day=1)
-        if next_month > end:
+        if next_month >= end:
             break
         result.append(
             {
